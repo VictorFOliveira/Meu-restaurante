@@ -1,0 +1,1 @@
+"""Meu Restaurante desktop package."""
