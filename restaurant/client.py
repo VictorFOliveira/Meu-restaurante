@@ -11,8 +11,8 @@ class ApiClient:
    raise RuntimeError(msg or f'Erro HTTP {r.status_code}')
   return r.json() if r.content else None
  def health(self):return self._call('GET','/health')
- def login(self,username,password):
-  data=self._call('POST','/auth/login',json={'username':username,'password':password});self.token=data['access_token'];self.user=data['user'];return self.user
+ def login(self,u,p):
+  d=self._call('POST','/auth/login',json={'username':u,'password':p});self.token=d['access_token'];self.user=d['user'];return self.user
  def logout(self):self.token=None;self.user=None
  def me(self):return self._call('GET','/auth/me')
  def tables(self):return self._call('GET','/tables')
@@ -21,7 +21,10 @@ class ApiClient:
  def totals(self,tid):return self._call('GET',f'/tables/{tid}/totals')
  def add_item(self,tid,item_id,qty,notes):return self._call('POST',f'/tables/{tid}/items',json={'item_id':item_id,'qty':qty,'notes':notes})
  def transfer(self,tid,target):return self._call('POST',f'/tables/{tid}/transfer',json={'target_table_id':target})
- def checkout(self,tid,method):return self._call('POST',f'/tables/{tid}/checkout',json={'payment_method':method})
+ def request_bill(self,tid):return self._call('POST',f'/tables/{tid}/request-bill')
+ def payment_summary(self,tid):return self._call('GET',f'/tables/{tid}/payment-summary')
+ def create_payment(self,tid,amount,method,provider=None):return self._call('POST',f'/tables/{tid}/payments',json={'amount':amount,'method':method,'provider':provider})
+ def approve_payment(self,pid,**data):return self._call('POST',f'/payments/{pid}/approve',json=data)
  def menu(self):return self._call('GET','/menu')
  def kitchen(self):return self._call('GET','/kitchen')
  def kitchen_status(self,item_id,status):return self._call('PATCH',f'/kitchen/{item_id}',json={'status':status})
