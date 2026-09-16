@@ -5,3 +5,5 @@ SQLAlchemy>=2.0,<3
 psycopg[binary]>=3.2,<4
 pydantic-settings>=2.7,<3
 httpx>=0.28,<1
+PyJWT>=2.10,<3
+pwdlib[argon2]>=0.2,<1
