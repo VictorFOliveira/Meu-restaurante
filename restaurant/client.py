@@ -11,8 +11,19 @@ class ApiClient:
    raise RuntimeError(msg or f'Erro HTTP {r.status_code}')
   return r.json() if r.content else None
  def health(self):return self._call('GET','/health')
- def login(self,u,p):
-  d=self._call('POST','/auth/login',json={'username':u,'password':p});self.token=d['access_token'];self.user=d['user'];return self.user
+ def login(self,u,p,tenant=None):
+  tenant=tenant or os.getenv('RESTAURANT_TENANT','demo')
+  d=self._call('POST','/auth/login',json={'tenant':tenant,'username':u,'password':p})
+  self.user=d.get('user')
+  if d.get('mfa_setup_required'):return {'mfa_setup_required':True,'challenge_token':d['challenge_token'],'user':self.user}
+  if d.get('mfa_required'):return {'mfa_required':True,'challenge_token':d['challenge_token'],'user':self.user}
+  self.token=d['access_token'];return self.user
+ def mfa_setup(self,challenge_token):
+  return self._call('POST','/auth/mfa/setup',json={'challenge_token':challenge_token})
+ def mfa_confirm(self,challenge_token,code):
+  d=self._call('POST','/auth/mfa/confirm',json={'challenge_token':challenge_token,'code':code});self.token=d['access_token'];return d
+ def mfa_verify(self,challenge_token,code=None,recovery_code=None):
+  d=self._call('POST','/auth/mfa/verify',json={'challenge_token':challenge_token,'code':code,'recovery_code':recovery_code});self.token=d['access_token'];return d
  def logout(self):self.token=None;self.user=None
  def me(self):return self._call('GET','/auth/me')
  def tables(self):return self._call('GET','/tables')
