@@ -31,7 +31,35 @@ def token_for(user):
       'iss':'cactus-food-api'
     },SECRET,algorithm=ALGORITHM)
 
-def current_user(authorization:str=Header(default='')):
+def challenge_for(user,purpose):
+    return jwt.encode({
+      'sub':str(user['id']),
+      'tenant_id':int(user['tenant_id']),
+      'purpose':purpose,
+      'exp':int(time.time())+300,
+      'iss':'cactus-food-api'
+    },SECRET,algorithm=ALGORITHM)
+
+def verify_challenge(token,purpose):
+    try:
+        data=jwt.decode(token,SECRET,algorithms=[ALGORITHM],issuer='cactus-food-api')
+        if data.get('purpose')!=purpose:return None
+        return data
+    except Exception:
+        return None
+
+def mfa_required(user):
+    required_roles={'ADM','CAIXA'}
+    env=os.getenv('ENVIRONMENT','development').lower()
+    force=(env=='production' and os.getenv('REQUIRE_ADMIN_MFA','true').lower()!='false') or os.getenv('REQUIRE_ADMIN_MFA','').lower()=='true'
+    return force and user['role'] in required_roles
+
+def _normalize_host(value):
+    host=str(value or '').strip().lower()
+    if ':' in host:host=host.split(':',1)[0]
+    return host.rstrip('.')
+
+def current_user(authorization:str=Header(default=''),host:str=Header(default='')):
     if not authorization.startswith('Bearer '):raise HTTPException(401,'Autenticação necessária.')
     try:
         data=jwt.decode(authorization[7:],SECRET,algorithms=[ALGORITHM],issuer='cactus-food-api')
@@ -47,6 +75,10 @@ def current_user(authorization:str=Header(default='')):
       LIMIT 1
     """,{'id':user_id,'tenant':tenant_id,'av':auth_version})
     if not r:raise HTTPException(401,'Usuário inativo ou sessão revogada.')
+    normalized=_normalize_host(host)
+    if normalized and normalized not in ('localhost','127.0.0.1'):
+        d=rows('SELECT tenant_id FROM tenant_domains WHERE lower(domain)=:d AND verified=TRUE LIMIT 1',{'d':normalized})
+        if d and int(d[0]['tenant_id'])!=tenant_id:raise HTTPException(401,'Sessão inválida para este domínio.')
     return r[0]
 
 def require(*roles):
