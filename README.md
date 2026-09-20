@@ -1,6 +1,6 @@
-# 🍽 Meu Restaurante
+# 🍽 Cactus Food
 
-Sistema de gestão de restaurante com **Desktop PySide6 + FastAPI + PostgreSQL**, preparado para operar em rede local e futuramente integrar TEF/POS, terminais de caixa, cozinha e dispositivos móveis.
+Plataforma de gestão para restaurantes com **Desktop PySide6 + FastAPI + PostgreSQL**, agora preparada para operação multi-tenant, rede local e integrações futuras com TEF/POS, terminais de caixa, cozinha e dispositivos móveis.
 
 ## Arquitetura
 
@@ -70,3 +70,27 @@ python -m restaurant.app
 **Operação:** comandas, juntar/dividir conta, adicionais, impressão, delivery/balcão, reservas, estoque/ficha técnica.
 
 **Segurança/produção:** autenticação, RBAC administrador/caixa/garçom/cozinha, auditoria, migrations Alembic, backup automático, TLS quando necessário, firewall LAN e empacotamento Windows.
+
+
+## Baseline Cactus SaaS
+
+A fundação atual inclui:
+
+- isolamento multi-tenant no backend;
+- RBAC e sessão revogável;
+- MFA TOTP administrativo;
+- auditoria;
+- idempotência de pagamentos;
+- proteção de concorrência em mesa, transferência, pagamento e fechamento;
+- fluxo técnico LGPD;
+- subdomínio Cactus e domínio próprio verificado;
+- API em container e PostgreSQL privado no Compose.
+
+Documentação:
+
+- [Segurança](docs/SECURITY.md)
+- [Privacidade/LGPD](docs/PRIVACY.md)
+- [Domínios por tenant](docs/DOMAINS.md)
+- [Checklist de produção](docs/PRODUCTION_CHECKLIST.md)
+
+O go-live ainda depende de TLS, backup/restore, observabilidade, staging e homologação das integrações reais.
