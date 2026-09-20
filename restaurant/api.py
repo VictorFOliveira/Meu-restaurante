@@ -37,7 +37,7 @@ class DomainCreate(BaseModel):domain:str
 def _audit(user,action,entity_type=None,entity_id=None,metadata=None):
     with connect() as con:
         con.execute(text("""INSERT INTO audit_logs(tenant_id,user_id,action,entity_type,entity_id,metadata)
-                            VALUES (:t,:u,:a,:et,:ei,:m::jsonb)"""),
+                            VALUES (:t,:u,:a,:et,:ei,CAST(:m AS jsonb))"""),
                     {'t':user.get('tenant_id'),'u':user.get('id'),'a':action,'et':entity_type,'ei':str(entity_id) if entity_id is not None else None,'m':__import__('json').dumps(metadata or {})})
 
 def _host(request:Request):
@@ -129,7 +129,7 @@ def mfa_confirm(body:MfaChallenge):
     codes=recovery_codes()
     hashes=[opaque_hash(x.upper()) for x in codes]
     with connect() as con:
-        con.execute(text("""UPDATE users SET mfa_enabled=TRUE,mfa_enabled_at=NOW(),mfa_recovery_hashes=:h::jsonb,auth_version=auth_version+1
+        con.execute(text("""UPDATE users SET mfa_enabled=TRUE,mfa_enabled_at=NOW(),mfa_recovery_hashes=CAST(:h AS jsonb),auth_version=auth_version+1
                             WHERE id=:id AND tenant_id=:t"""),
                     {'h':__import__('json').dumps(hashes),'id':u['id'],'t':u['tenant_id']})
         refreshed=con.execute(text('SELECT * FROM users WHERE id=:id AND tenant_id=:t'),{'id':u['id'],'t':u['tenant_id']}).mappings().first()
