@@ -6,9 +6,25 @@ CSS='''QMainWindow,QWidget{background:#f6f7f9;color:#20242a;font-family:Segoe UI
 def money(v):return f'R$ {float(v):,.2f}'.replace(',','X').replace('.',',').replace('X','.')
 class Login(QDialog):
  def __init__(self):
-  super().__init__();self.setWindowTitle('Meu Restaurante • Login');self.setFixedSize(390,280);self.setStyleSheet(CSS);v=QVBoxLayout(self);t=QLabel('🍽  MEU RESTAURANTE');t.setObjectName('title');v.addWidget(t);v.addWidget(QLabel('Entre para acessar seu ambiente de trabalho.'));self.u=QLineEdit();self.u.setPlaceholderText('Usuário');self.p=QLineEdit();self.p.setPlaceholderText('Senha');self.p.setEchoMode(QLineEdit.Password);v.addWidget(self.u);v.addWidget(self.p);b=QPushButton('Entrar');b.clicked.connect(self.go);v.addWidget(b);self.p.returnPressed.connect(self.go)
+  super().__init__();self.setWindowTitle('Cactus Food • Login');self.setFixedSize(390,340);self.setStyleSheet(CSS);v=QVBoxLayout(self);t=QLabel('🍽  CACTUS FOOD');t.setObjectName('title');v.addWidget(t);v.addWidget(QLabel('Entre para acessar o ambiente do restaurante.'));self.tenant=QLineEdit();self.tenant.setPlaceholderText('Restaurante / tenant');self.tenant.setText(__import__('os').getenv('RESTAURANT_TENANT','demo'));self.u=QLineEdit();self.u.setPlaceholderText('Usuário');self.p=QLineEdit();self.p.setPlaceholderText('Senha');self.p.setEchoMode(QLineEdit.Password);v.addWidget(self.tenant);v.addWidget(self.u);v.addWidget(self.p);b=QPushButton('Entrar');b.clicked.connect(self.go);v.addWidget(b);self.p.returnPressed.connect(self.go)
  def go(self):
-  try:api.login(self.u.text().strip(),self.p.text());self.accept()
+  try:
+   result=api.login(self.u.text().strip(),self.p.text(),self.tenant.text().strip())
+   if isinstance(result,dict) and result.get('mfa_setup_required'):
+    setup=api.mfa_setup(result['challenge_token'])
+    QMessageBox.information(self,'Ativar verificação em duas etapas',f"Adicione esta chave no seu aplicativo autenticador:\n\n{setup['secret']}\n\nDepois informe o código de 6 dígitos.")
+    code,ok=QInputDialog.getText(self,'Confirmar MFA','Código de 6 dígitos:')
+    if not ok:return
+    confirmed=api.mfa_confirm(setup['challenge_token'],code.strip())
+    codes=confirmed.get('recovery_codes') or []
+    QMessageBox.information(self,'Códigos de recuperação','Guarde estes códigos em local seguro:\n\n'+'\n'.join(codes))
+   elif isinstance(result,dict) and result.get('mfa_required'):
+    code,ok=QInputDialog.getText(self,'Verificação em duas etapas','Código MFA ou código de recuperação:')
+    if not ok:return
+    value=code.strip()
+    if value.isdigit() and len(value)==6:api.mfa_verify(result['challenge_token'],code=value)
+    else:api.mfa_verify(result['challenge_token'],recovery_code=value)
+   self.accept()
   except Exception as e:QMessageBox.warning(self,'Acesso negado',str(e))
 class OrderDialog(QDialog):
  def __init__(self,tid,parent=None):
@@ -18,7 +34,7 @@ class OrderDialog(QDialog):
  def save(self):api.add_item(self.tid,self.combo.currentData(),self.qty.value(),self.notes.text())
 class Main(QMainWindow):
  def __init__(self):
-  super().__init__();self.setWindowTitle('Meu Restaurante');self.resize(1280,780);self.setStyleSheet(CSS);root=QWidget();self.setCentralWidget(root);lay=QHBoxLayout(root);nav=QVBoxLayout();title=QLabel('🍽 MEU RESTAURANTE');title.setObjectName('title');nav.addWidget(title);u=api.user;nav.addWidget(QLabel(f"{u['name']}\nPerfil: {u['role']}"));self.status=QLabel();nav.addWidget(self.status);self.stack=QStackedWidget();self.pages=[]
+  super().__init__();self.setWindowTitle('Cactus Food');self.resize(1280,780);self.setStyleSheet(CSS);root=QWidget();self.setCentralWidget(root);lay=QHBoxLayout(root);nav=QVBoxLayout();title=QLabel('🍽 MEU RESTAURANTE');title.setObjectName('title');nav.addWidget(title);u=api.user;nav.addWidget(QLabel(f"{u['name']}\nPerfil: {u['role']}"));self.status=QLabel();nav.addWidget(self.status);self.stack=QStackedWidget();self.pages=[]
   role=u['role'];allowed={'ADM':[('Mesas',self.tables_page),('Cozinha',self.kitchen_page),('Cardápio',self.menu_page),('Caixa',self.cash_page)],'CAIXA':[('Mesas',self.tables_page),('Cardápio',self.menu_page),('Caixa',self.cash_page)],'GARCOM':[('Mesas',self.tables_page),('Cardápio',self.menu_page)],'COZINHA':[('Cozinha',self.kitchen_page),('Cardápio',self.menu_page)]}[role]
   for name,fn in allowed:
    i=len(self.pages);self.pages.append(fn);b=QPushButton(name);b.setObjectName('nav');b.clicked.connect(lambda _,x=i:self.show_page(x));nav.addWidget(b);self.stack.addWidget(QWidget())
