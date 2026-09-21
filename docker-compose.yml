@@ -27,7 +27,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-CHANGE-ME-IN-PRODUCTION}
       MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:-change-mfa-key-with-at-least-32-characters}
       REQUIRE_ADMIN_MFA: ${REQUIRE_ADMIN_MFA:-false}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8001}
       SEED_DEMO: ${SEED_DEMO:-false}
       CACTUS_FOOD_BASE_DOMAIN: ${CACTUS_FOOD_BASE_DOMAIN:-food.cactustecnologia.com.br}
       CACTUS_FOOD_CUSTOM_CNAME: ${CACTUS_FOOD_CUSTOM_CNAME:-custom.food.cactustecnologia.com.br}
