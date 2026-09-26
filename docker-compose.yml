@@ -22,6 +22,8 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://restaurante:restaurante_local@postgres:5432/meu_restaurante}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      CACTUS_SAAS_ENV: ${CACTUS_SAAS_ENV:-local}
+      CACTUS_PAIRING_KEY: ${CACTUS_PAIRING_KEY:-}
       API_HOST: 0.0.0.0
       API_PORT: 8000
       JWT_SECRET: ${JWT_SECRET:-CHANGE-ME-IN-PRODUCTION}
