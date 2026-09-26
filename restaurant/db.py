@@ -143,6 +143,14 @@ CREATE TABLE IF NOT EXISTS tenant_domains (
   verified_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS platform_control_plane_credentials (
+  id INTEGER PRIMARY KEY CHECK(id=1),
+  key_hash CHAR(64) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  paired_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  rotated_at TIMESTAMPTZ
+);
 """
 
 MIGRATIONS=[
