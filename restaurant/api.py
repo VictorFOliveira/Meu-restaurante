@@ -7,10 +7,12 @@ import dns.resolver
 from pwdlib import PasswordHash
 from .db import init_db,rows,connect
 from . import service
+from .cactus_pairing import router as cactus_pairing_router
 from .auth import authenticate,token_for,current_user,require,challenge_for,verify_challenge,mfa_required
 from .security import generate_totp_secret,encrypt_secret,decrypt_secret,verify_totp,recovery_codes,opaque_hash
 
 app=FastAPI(title='Cactus Food API',version='0.6.0')
+app.include_router(cactus_pairing_router)
 ph=PasswordHash.recommended()
 
 origins=[x.strip() for x in os.getenv('CORS_ORIGINS','http://localhost:5173,http://localhost:8000').split(',') if x.strip()]
@@ -68,6 +70,7 @@ def _validate_runtime():
     if len(secret)<32 or secret=='CHANGE-ME-IN-PRODUCTION':raise RuntimeError('JWT_SECRET forte é obrigatório em produção')
     if len(os.getenv('MFA_ENCRYPTION_KEY',''))<32:raise RuntimeError('MFA_ENCRYPTION_KEY forte é obrigatória em produção')
     if os.getenv('SEED_DEMO','false').lower()=='true':raise RuntimeError('SEED_DEMO deve ser false em produção')
+    if len(os.getenv('CACTUS_PAIRING_KEY',''))<32:raise RuntimeError('CACTUS_PAIRING_KEY forte é obrigatória em produção')
     if not origins or any('*'==x or 'localhost' in x or '127.0.0.1' in x for x in origins):
         raise RuntimeError('CORS_ORIGINS deve conter somente origens reais em produção')
 
